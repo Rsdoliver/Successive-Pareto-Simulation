@@ -1,0 +1,55 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 23 00:17:44 2024
+
+@author: rsdol
+"""
+
+# Exemplo usando NSPS
+
+import numpy as np
+import scipy.stats as stats
+from NewSPS import PSMC
+import time
+
+#%% Variáveis de entrada
+
+N = int(1e4)
+nRV = 2
+M = np.array([0,0])
+S = np.array([1,1])
+
+#%% Funções
+
+# Função de falha
+
+def fun_G(X):
+    G = 10 - 2*X[0] - 3*X[1];
+    return G
+
+#%% Geração de valores aleatórios
+
+Xs = np.zeros((N,nRV))
+
+for i in range(nRV):
+    Xs[:,i] = np.array(list(np.random.normal(M[i],S[i],size=N)))
+
+
+#%% Cálculo
+start = time.time()
+[N_fail,F_count,direction,times] = PSMC(Xs,fun_G,M,S,direction=[],plot=1)
+end = time.time()
+print("Total time (s): ",end-start)
+print("Filtering time (s): ",times)
+
+PF_SMC = N_fail/N # Probabilidade de Falha
+
+if PF_SMC == 0:
+    CoV = 0;
+else:
+    CoV = np.sqrt((1-PF_SMC)/(PF_SMC*N)) # Coeficiente de Variação
+
+print('\nProbabilidade de falha = {}'.format(PF_SMC))
+print('Beta = {}'.format(-stats.norm.ppf(PF_SMC)))
+print('Coeficiente de Variação = {}'.format(CoV))
+print('Número de avaliações de G = {}'.format(F_count))
