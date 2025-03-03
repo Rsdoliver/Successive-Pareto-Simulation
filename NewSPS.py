@@ -5,11 +5,11 @@ Created on Mon Feb  6 22:31:32 2023
 @author: rsdol
 """
 
-# New Sucessive Pareto Simulation (Prof. Renato Motta - UFPE)
+# New Sucessive Pareto Simulation
+# Test version
 
 import numpy as np
 import copy
-import time
 import matplotlib.pyplot as plt
 import matplotlib
 from sklearn.preprocessing import QuantileTransformer
@@ -17,7 +17,6 @@ from sklearn.preprocessing import QuantileTransformer
 # Pareto front
 def domination_filter(X,direction):
     
-    start = time.time()
     pdominant = np.arange(X.shape[0])
     next_point_index = 0  # Next index in the pdominant array to search for
     while next_point_index<len(X):
@@ -26,9 +25,7 @@ def domination_filter(X,direction):
         pdominant = pdominant[nondominated_point_mask]  # Remove dominated points
         X = X[nondominated_point_mask] # Remove dominated points
         next_point_index = np.sum(nondominated_point_mask[:next_point_index])+1 # Next reference point
-    end = time.time()
-    time1 = end - start
-    return pdominant, time1
+    return pdominant
 
 # Failure direction
 def faildir(M,S,fun_G,nRV):
@@ -151,7 +148,6 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
     
     # Initialize variables
     nv = np.size(X,axis=1)
-    times = 0; # Count time
     fail_stack = 0 # Stack for how many iterations without failed points are allowed
     if max_fail_stack == []:
         max_fail_stack = 3 # Maximum value for fail stack
@@ -185,7 +181,7 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         # Initialize variables
         [N,nv] = [np.size(X,0),np.size(X,1)] # N = Number of samples, nv = Number of RVs
         Xaux = X*(np.ones((N,1)) @ direction.reshape(1,nv)) # Correct signs through directions to select correctly
-        pdominant, time1 = domination_filter(Xaux,direction) # Find dominant points (index)
+        pdominant = domination_filter(Xaux,direction) # Find dominant points (index)
         iteration += 1
         n_index = np.arange(X.shape[0]) # Index list of the sample
         count = 0
@@ -207,9 +203,6 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         
         # Total number of failed points
         N_fail = N_fail + i_fail
-        
-        # Start filtering time measure
-        start = time.time()
         
         # Safe dominant and dominated points count
         safe_out = set()
@@ -307,10 +300,6 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
                 if iteration == 2:
                     plt.legend().remove()
         
-        # End filtering time measure
-        end = time.time()
-        times = times + (end - start) + time1
-        
         # # Set update to include safe dominant and dominated points
         i_out |= safe_out
         
@@ -330,4 +319,4 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         else:
             fail_stack = 0
             
-    return [N_fail,F_count,direction,times]
+    return [N_fail,F_count,direction]

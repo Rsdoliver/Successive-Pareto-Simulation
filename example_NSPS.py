@@ -10,14 +10,13 @@ Created on Tue Jul 23 00:17:44 2024
 import numpy as np
 import scipy.stats as stats
 from NewSPS import PSMC
-import time
 
 #%% Variáveis de entrada
 
-N = int(1e4)
-nRV = 2
-M = np.array([0,0])
-S = np.array([1,1])
+N = int(3350) # Sample size
+nRV = 2 # Number of random variables
+M = np.array([0,0]) # Mean vector
+S = np.array([1,1]) # Standard deviation vector
 
 #%% Funções
 
@@ -36,11 +35,7 @@ for i in range(nRV):
 
 
 #%% Cálculo
-start = time.time()
-[N_fail,F_count,direction,times] = PSMC(Xs,fun_G,M,S,direction=[],plot=1)
-end = time.time()
-print("Total time (s): ",end-start)
-print("Filtering time (s): ",times)
+[N_fail,F_count,direction] = PSMC(Xs,fun_G,M,S,direction=[])
 
 PF_SMC = N_fail/N # Probabilidade de Falha
 

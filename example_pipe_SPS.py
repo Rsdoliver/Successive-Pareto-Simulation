@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 23 00:17:44 2024
+Created on Sun Jun  6 09:34:17 2021
 
-@author: rsdol
+@author: Rodrigo
 """
 
-# Exemplo usando Simulação Sucessiva de Pareto
+# Monte Carlo Seletivo (Prof. Renato Motta)
+# ARQUIVO DE ENTRADA
 
 import numpy as np
 import scipy.stats as stats
@@ -14,20 +15,28 @@ from Distribution_class import pdf_parameters, generate_sample
 
 #%% Variáveis de entrada
 
-N = int(1e4) # Sample size
-nRV = 2 # Number of random variables
-M = np.array([0,0]) # Mean vector
-S = np.array([1,1]) # Standard deviation vector
+N = 618400      # Tamanho da amostra do MC
+nRV = 6            # Número de variáveis aleatórias
+
+De = 406.4   # Diâmetro externo (mm)
+t = 12.7      # Espessura do duto (mm)
+ld = 173.9    # Comprimento do defeito (mm)
+d = 2.17     # Profundidade do defeito (mm)
+Pint = 17.28  # Pressão interna de operação (MPa)
+sigmay = 410.7 # Tensão de escoamento (MPa)
+M = [De,t,ld,d,Pint,sigmay];    # Vetor com as médias
+S = [0.41,0.13,87,1.09,1.2,32.86];     # Vetor com os desvios-padrão
 
 # Array of Dist. Types
-RV_type=['norm','norm'];
+RV_type=['norm','norm','weibull','weibull','gumbel','lognorm'];
 
 #%% Funções
 
 # Função de falha
 
 def fun_G(X):
-    G = 10 - 2*X[0] - 3*X[1];
+    m = np.sqrt(1+0.8*((X[2]/X[0])**2)*(X[0]/X[1]))
+    G = ((1.1*X[5]*2*X[1])/X[0])*((1-(2/3)*(X[3]/X[1]))/(1-(2/3)*(X[3]/X[1])*m**(-1)))-X[4];
     return G
 
 #%% Geração de valores aleatórios (amostra)
@@ -61,3 +70,8 @@ print('\nProbabilidade de falha = {}'.format(PF_SMC))
 print('Beta = {}'.format(-stats.norm.ppf(PF_SMC)))
 print('Coeficiente de Variação = {}'.format(CoV))
 print('Número de avaliações de G = {}'.format(F_count))
+
+
+
+
+

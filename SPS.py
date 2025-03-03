@@ -5,7 +5,7 @@ Created on Mon Feb  6 22:31:32 2023
 @author: rsdol
 """
 
-# Sucessive Pareto Simulation (Prof. Renato Motta - UFPE)
+# Successive Pareto Simulation (Prof. Renato Motta - UFPE)
 
 import numpy as np
 import copy
@@ -46,8 +46,9 @@ def faildir(M,S,fun_G,nRV):
     return direction
 
 # Monte Carlo Seletivo
-def PSMC(X,fun_G,M,S,nRV,direction=[]):
+def PSMC(X,fun_G,M,S,direction=[]):
     
+    nRV = np.size(X,axis=1)
     if direction == []:
         direction = faildir(M,S,fun_G,nRV);
         
@@ -86,61 +87,26 @@ def PSMC(X,fun_G,M,S,nRV,direction=[]):
             safe_out |= set(dominate_over) # Remove safe dominated points
         
         # # Plot (for 2 variables)
-        # if nRV == 2:
-        #     safe_par = set(pdominant[gd>0])
-        #     if iteration == 1:
-        #         matplotlib.rcParams['font.family'] = 'serif'
-        #         matplotlib.rcParams['font.serif'] = ['Times New Roman']
-        #         plt.figure(figsize=(7, 5))
-        #         plt.scatter(X[:,0],X[:,1],c='blue',s=8, label = 'Sample points')
-        #         plt.legend(loc='lower left')
-        #         plt.xlabel('$\\it{X_{1}}$')
-        #         plt.ylabel('$\\it{X_{2}}$')
-        #         plt.title('Original sample')
-        #         plt.savefig('smc_sample.png', format='png', dpi=300, bbox_inches='tight')
-        #     plt.scatter(X[list(i_out),0],X[list(i_out),1],c='red',marker='D', label='Failed Pareto points')
-        #     plt.scatter(X[list(safe_par),0],X[list(safe_par),1],c='green',marker='o', label = 'Safe Pareto points')
-        #     plt.scatter(X[list(safe_out-safe_par),0],X[list(safe_out-safe_par),1],c='black',marker='x', label = 'Removed points')
-        #     plt.title('Iteration ' + str(iteration) + ' ($\\it{N_{e}}$ = ' + str(F_count)+')')
-        #     if iteration == 1:
-        #         plt.legend(loc='lower left')  # Display legend
-        #     plt.savefig('smc_iter_'+str(iteration)+'.png', format='png', dpi=1200, bbox_inches='tight')
-        
-        # Plot (for 2 variables)
         if nRV == 2:
             safe_par = set(pdominant[gd>0])
             if iteration == 1:
                 matplotlib.rcParams['font.family'] = 'serif'
                 matplotlib.rcParams['font.serif'] = ['Times New Roman']
-                fig, ax = plt.subplots(figsize=(7, 5))
-                ax.scatter(X[:,0],X[:,1],c='blue',s=3, label = 'Remaining sample points')
-                ax.legend(loc='lower left',fontsize=14)
-                plt.xlabel('$\\it{X_{1}}$',fontsize=14)
-                plt.ylabel('$\\it{X_{2}}$',fontsize=14)
-                plt.tick_params(axis='both', which='major', labelsize=14)
-                plt.title('Original sample',fontsize=20)
+                plt.figure(figsize=(7, 5))
+                plt.scatter(X[:,0],X[:,1],c='blue',s=8, label = 'Sample points')
+                plt.legend(loc='lower left')
+                plt.xlabel('$\\it{X_{1}}$')
+                plt.ylabel('$\\it{X_{2}}$')
+                plt.title('Original sample')
                 plt.savefig('smc_sample.png', format='png', dpi=300, bbox_inches='tight')
-                plt.scatter(X[list(i_out),0],X[list(i_out),1],c='red',marker='D', label='Failed Pareto points',s=40)
-                plt.scatter(X[list(safe_par),0],X[list(safe_par),1],c='green',marker='o', label = 'Safe Pareto points',s=40)
-                plt.scatter(X[list(safe_out-safe_par),0],X[list(safe_out-safe_par),1],c='black',marker='x', label = 'Removed points',s=40)
-                plt.title('Iteration ' + str(iteration) + ' ($\\it{N_{e}}$ = ' + str(F_count)+')',fontsize=16)
-                ax.legend(loc='lower left',fontsize=14)  # Display legend
-            else:
-                plt.scatter(X[list(i_out),0],X[list(i_out),1],c='red',marker='D', label='Failed Pareto points',s=60)
-                plt.scatter(X[list(safe_par),0],X[list(safe_par),1],c='green',marker='o', label = 'Safe Pareto points',s=60)
-                plt.scatter(X[list(safe_out-safe_par),0],X[list(safe_out-safe_par),1],c='black',marker='x', label = 'Removed points',s=60)
-                plt.title('Iteration ' + str(iteration) + ' ($\\it{N_{e}}$ = ' + str(F_count)+')',fontsize=20)
-                plt.xlabel('$\\it{X_{1}}$',fontsize=24)
-                plt.ylabel('$\\it{X_{2}}$',fontsize=24)
-                plt.tick_params(axis='both', which='major', labelsize=24)
-            plt.savefig('smc_iter_'+str(iteration)+'.png', format='png', dpi=1200, bbox_inches='tight')
+            plt.scatter(X[list(i_out),0],X[list(i_out),1],c='red',marker='D', label='Failed Pareto points')
+            plt.scatter(X[list(safe_par),0],X[list(safe_par),1],c='green',marker='o', label = 'Safe Pareto points')
+            plt.scatter(X[list(safe_out-safe_par),0],X[list(safe_out-safe_par),1],c='black',marker='x', label = 'Removed points')
+            plt.title('Iteration ' + str(iteration) + ' ($\\it{N_{e}}$ = ' + str(F_count)+')')
             if iteration == 1:
-                legend = ax.get_legend()  # Retrieve the existing legend
-                if legend is not None:
-                    for text in legend.get_texts():
-                        text.set_fontsize(20)
-            if iteration == 2:
-                plt.legend().remove()
+                plt.legend(loc='lower left')  # Display legend
+            plt.savefig('smc_iter_'+str(iteration)+'.png', format='png', dpi=1200, bbox_inches='tight')
+       
         
         # Set update to include safe dominant and dominated points
         i_out |= safe_out
