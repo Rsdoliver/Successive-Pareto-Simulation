@@ -65,3 +65,14 @@ def generate_sample(T,P,N):
       'gumbel': lambda x:stats.gumbel_r.rvs(loc = P[0], scale = P[1], size = N),
       'weibull': lambda x:P[1]*np.random.weibull(P[0],size=N)
     }[T](P)
+
+# Inverse of CDF
+def icdf(T, X, P):
+    return {
+        'norm':     lambda x, y: stats.norm.ppf(x, loc=y[0], scale=y[1]),
+        'lognorm':  lambda x, y: stats.lognorm.ppf(x, s=y[1], scale=y[0]),
+        'gamma':    lambda x, y: stats.gamma.ppf(x, a=y[0], scale=y[1]),
+        'expon':    lambda x, y: stats.expon.ppf(x, loc=0, scale=y[0]),  # P[0] = mean = scale
+        'gumbel':   lambda x, y: stats.gumbel_r.ppf(x, loc=y[0], scale=y[1]),
+        'weibull':  lambda x, y: stats.weibull_min.ppf(x, c=y[0], scale=y[1])
+    }[T](X, P)
