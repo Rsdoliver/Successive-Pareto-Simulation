@@ -15,16 +15,21 @@ from Distribution_class import pdf_parameters
 from FORM import form
 
 #%% Variáveis de entrada
+
+N = int(10000)
+nRV = 2
+M = np.array([0.,0.])
+S = np.array([1.,1.])
+
+# Array of Dist. Types
+RV_type=['norm','norm'];
+
 PF = 0.;
 aval = 0;
 cov = 0.;
 n = 1;
 PF_i = np.zeros(n)
 for k in range(n):
-    N = int(10000)
-    nRV = 2
-    M = np.array([0.,0.])
-    S = np.array([1.,1.])
     
     #%% Funções
     
@@ -42,12 +47,6 @@ for k in range(n):
         Xs[:,i] = np.array(list(np.random.normal(M[i],S[i],size=N)))
     
     #%% Cálculo
-
-    # Array of Dist. Types
-    RV_type=['norm','norm'];
-
-    #num. de variaveis aleatorias
-    nRV = len(M);
 
     P = list(range(nRV))
     for i in range(nRV):
