@@ -5,18 +5,21 @@ Created on Mon Feb  6 22:31:32 2023
 @author: rsdol
 """
 
-# New Sucessive Pareto Simulation
+# New Successive Pareto Simulation (Prof. Renato Motta - UFPE)
 # Test version
 
 import numpy as np
 import copy
+import time
 import matplotlib.pyplot as plt
 import matplotlib
-from sklearn.preprocessing import QuantileTransformer
+import Distribution_class as DC
+from scipy import stats
 
 # Pareto front
 def domination_filter(X,direction):
     
+    start = time.time()
     pdominant = np.arange(X.shape[0])
     next_point_index = 0  # Next index in the pdominant array to search for
     while next_point_index<len(X):
@@ -25,7 +28,9 @@ def domination_filter(X,direction):
         pdominant = pdominant[nondominated_point_mask]  # Remove dominated points
         X = X[nondominated_point_mask] # Remove dominated points
         next_point_index = np.sum(nondominated_point_mask[:next_point_index])+1 # Next reference point
-    return pdominant
+    end = time.time()
+    time1 = end - start
+    return pdominant, time1
 
 # Failure direction
 def faildir(M,S,fun_G,nRV):
@@ -59,24 +64,45 @@ def newfaildir(X,pdominant,gd,direction,i_fail):
 
     return new_direction
 
-def x_to_u(X):
+def x_to_u(X,RV_type,P):
     
-    # Transform X variables to standard gaussian space
-    global transformer
-    X_normal = transformer.fit_transform(X)
-
-    return X_normal
-
-def u_to_x(X):
+    X_normal = X*0
+    Seq = X*0
+    Meq = X*0
+    # Normal Equivalent Distribution
+    for j in range (np.size(X,0)):
+        for i in range(np.size(X,1)):
+            #print(RV_type[i],X[i],P[i][:])
+            Px=DC.cdf(RV_type[i],X[j,i],P[i][:])
+            px=DC.pdf(RV_type[i],X[j,i],P[i][:])
+            if px<1e-25:
+                px = 1e-25
+            if Px<1e-25:
+                Px = 1e-25
+            X_normal[j,i]=stats.norm.ppf(Px,0,1)
+            Seq[j,i]=stats.norm.pdf(X_normal[j,i])/px
+            Meq[j,i]=X[j,i]-X_normal[j,i]*Seq[j,i]
     
-    # Transform variables from standard gaussian space back to original space
-    global transformer
-    X_original = transformer.inverse_transform([X])
+    return X_normal, Meq, Seq
 
-    return X_original
+def u_to_x(X_normal, RV_type, P):
+    # Inicializa a matriz X com zeros, com o mesmo shape da matriz normalizada
+    X = np.zeros_like(X_normal)
+
+    for i in range(X_normal.shape[0]):
+            # Probabilidade acumulada no espaço normal padrão
+            u_cdf = stats.norm.cdf(X_normal[i])
+
+            # Garante que o valor fique dentro de uma faixa numérica válida
+            u_cdf = np.clip(u_cdf, 1e-10, 1 - 1e-10)
+
+            # Usa a inversa da CDF da distribuição original
+            X[i] = DC.icdf(RV_type[i], u_cdf, P[i][:])  # ppf = percent point function (CDF inversa)
+
+    return X
 
 def find_check_points(X,direction):
-    # Obs.: This function can be changed for a function that verify all directions
+    
     # Dimension
     n = len(direction)
     
@@ -132,22 +158,21 @@ def find_check_points(X,direction):
     
     return check_points
 
-# Selective Monte Carlo
-def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
+# New Successive Pareto Simulation (NSPS)
+def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
     # direction = List with 1 or -1 for each RV (float)
     # width = Width of the vector from mean to safe Pareto points where it is safe to remove points
     #         (It is given in terms of standard deviation, so it is recommended a number between
-    #          1.5 and 2 if there are only 2 failure directions or less and between 0.5 and 1 for more).
+    #          1.5 and 2 if there are only 2 failure directions (or less) and between 0.1 and 1 for more).
     # plot = Set any value to generate plot figures (PNG) for problems with 2 variables
     # max_fail_stack = Maximum value for the allowed number of iterations without failed Pareto points
     
     # Transform sample X to standard gaussian space
-    global transformer
-    transformer = QuantileTransformer(output_distribution='normal', random_state=0)
-    X = x_to_u(X)
+    X, Meq, Seq = x_to_u(X,RV_type,P)
     
     # Initialize variables
     nv = np.size(X,axis=1)
+    times = 0; # Count time
     fail_stack = 0 # Stack for how many iterations without failed points are allowed
     if max_fail_stack == []:
         max_fail_stack = 3 # Maximum value for fail stack
@@ -168,7 +193,7 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
     if width == 0:
         check_points = find_check_points(X,direction)
         for i in range(len(check_points)):
-            G_check = fun_G(u_to_x(check_points[i])[0])
+            G_check = fun_G(u_to_x(check_points[i],RV_type,P))
             F_count += 1
             if G_check <= 0:
                 print('\nNew algorithm on\n')
@@ -181,7 +206,7 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         # Initialize variables
         [N,nv] = [np.size(X,0),np.size(X,1)] # N = Number of samples, nv = Number of RVs
         Xaux = X*(np.ones((N,1)) @ direction.reshape(1,nv)) # Correct signs through directions to select correctly
-        pdominant = domination_filter(Xaux,direction) # Find dominant points (index)
+        pdominant, time1 = domination_filter(Xaux,direction) # Find dominant points (index)
         iteration += 1
         n_index = np.arange(X.shape[0]) # Index list of the sample
         count = 0
@@ -189,7 +214,7 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         
         # Failure function evaluations on dominant points
         for i in pdominant:
-            gd[count] = fun_G(u_to_x(X[i,:])[0])
+            gd[count] = fun_G(u_to_x(X[i,:],RV_type,P))
             count += 1
         
         # Function evaluations count
@@ -203,6 +228,9 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         
         # Total number of failed points
         N_fail = N_fail + i_fail
+        
+        # Start filtering time measure
+        start = time.time()
         
         # Safe dominant and dominated points count
         safe_out = set()
@@ -228,15 +256,12 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
                             lateral_tol = np.ones(nv)
                         else:
                             lateral_tol = 1.5*np.ones(nv)
-                    # elif width == 1:
-                    #      lateral_tol = np.ones(nv)
                     else:
-                        lateral_tol = width*np.ones(nv)
-                    # elif np.sum(np.all(safe_dist <= 2*lateral_tol,axis=1)) < 6:
-                    #     lateral_tol = 0.25*np.ones(nv)
-                    # else:
-                    #     lateral_tol = 0.5*np.ones(nv)
-                    #if np.sum(np.logical_and(np.all(safe_dist <= 2*lateral_tol,axis=1),np.all(safe_dist > 0.25*lateral_tol,axis=1))) >= 3:
+                        safe_dist = np.abs(Xaux[pdominant[gd>0]]-Xaux[pdominant[i]]) # Distance between safe Pareto points
+                        if np.sum(np.logical_and(np.all(safe_dist <= np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) < 2: # If less than 3 safe Pareto points inside width, do not remove points
+                            inlimit_points = set()
+                        else:
+                            lateral_tol = width*np.ones(nv)
                     if np.sum(np.logical_and(np.all(safe_dist <= 2*np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) > 1:
                         #else:
                         # Find perpendicular distance from sample points with respect to vector from mean to safe Pareto point
@@ -246,15 +271,10 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
                         perpendicular_dist = w - parallel_dist # Calculate the perpendicular vector
                         # Set with points to be removed (inside width limits)
                         inlimit_points = safe_out.intersection(set(n_index[np.all(np.abs(perpendicular_dist)<=lateral_tol,axis=1)])) # Set limit
-                        # Find end and mid point (end point is the most distant point in direction from mean to safe Pareto point)
-                        #test_point_end = Xaux[pdominant[i]] + np.linalg.norm((np.max(Xaux[list(inlimit_points)],axis=0) - np.min(Xaux[list(inlimit_points)],axis=0)))*((-1)*Xaux[pdominant[i]])/np.linalg.norm((-1)*Xaux[pdominant[i]])
-                        #test_point_mid = Xaux[pdominant[i]] - (Xaux[pdominant[i]] - test_point_end)/2
-                        # Remove points from Pareto front to mid point
-                        #inlimit_points = set(n_index[list(inlimit_points)][np.all(Xaux[list(inlimit_points)] >= test_point_mid,axis=1)]) # If only end point fail, remove points until mid point
-                        inlimit_points = set(n_index[list(inlimit_points)][np.linalg.norm(parallel_dist[list(inlimit_points)],axis=1) <= np.linalg.norm(v)]) # If only end point fail, remove points until mid point
+                        inlimit_points = set(n_index[list(inlimit_points)][np.linalg.norm(parallel_dist[list(inlimit_points)],axis=1) <= np.linalg.norm(v)]) # Remove points until mean point
                 else:
                     inlimit_points = set() # If it is not a safe Pareto front, do not remove points
-                # Set with points found, both to remove and to keep
+                # Set with points found to remove
                 total_inlimit |= inlimit_points
             
             # Update safe_in (points to keep in sample)
@@ -300,6 +320,10 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
                 if iteration == 2:
                     plt.legend().remove()
         
+        # End filtering time measure
+        end = time.time()
+        times = times + (end - start) + time1
+        
         # # Set update to include safe dominant and dominated points
         i_out |= safe_out
         
@@ -319,4 +343,4 @@ def PSMC(X,fun_G,M,S,direction=[],width=0,plot=[],max_fail_stack=[]):
         else:
             fail_stack = 0
             
-    return [N_fail,F_count,direction]
+    return [N_fail,F_count,direction,times]
