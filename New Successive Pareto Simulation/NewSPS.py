@@ -163,7 +163,7 @@ def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
     # direction = List with 1 or -1 for each RV (float)
     # width = Width of the vector from mean to safe Pareto points where it is safe to remove points
     #         (It is given in terms of standard deviation, so it is recommended a number between
-    #          1.5 and 2 if there are only 2 failure directions (or less) and between 0.1 and 1 for more).
+    #          1 and 2 if there are only 2 failure directions (or less) and between 0.1 and 1 for more).
     # plot = Set any value to generate plot figures (PNG) for problems with 2 variables
     # max_fail_stack = Maximum value for the allowed number of iterations without failed Pareto points
     
