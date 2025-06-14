@@ -12,7 +12,7 @@ import numpy as np
 import scipy.stats as stats
 from SPS_IS import PSMC
 from Distribution_class import pdf_parameters
-from FORM2 import form
+from FORM import form
 
 #%% Variáveis de entrada
 PF = 0.;
