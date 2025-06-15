@@ -80,10 +80,8 @@ def x_to_u(X,RV_type,P):
             if Px<1e-25:
                 Px = 1e-25
             X_normal[j,i]=stats.norm.ppf(Px,0,1)
-            Seq[j,i]=stats.norm.pdf(X_normal[j,i])/px
-            Meq[j,i]=X[j,i]-X_normal[j,i]*Seq[j,i]
     
-    return X_normal, Meq, Seq
+    return X_normal
 
 def u_to_x(X_normal, RV_type, P):
     # Inicializa a matriz X com zeros, com o mesmo shape da matriz normalizada
@@ -168,7 +166,7 @@ def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
     # max_fail_stack = Maximum value for the allowed number of iterations without failed Pareto points
     
     # Transform sample X to standard gaussian space
-    X, Meq, Seq = x_to_u(X,RV_type,P)
+    X = x_to_u(X,RV_type,P)
     
     # Initialize variables
     nv = np.size(X,axis=1)
