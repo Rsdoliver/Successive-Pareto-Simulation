@@ -163,7 +163,7 @@ def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
     # direction = List with 1 or -1 for each RV (float)
     # width = Width of the vector from mean to safe Pareto points where it is safe to remove points
     #         (It is given in terms of standard deviation, so it is recommended a number between
-    #          1 and 2 if there are only 2 failure directions (or less) and between 0.1 and 1 for more).
+    #          1.5 and 2 if there are only 2 failure directions (or less) and between 0.1 and 1 for more).
     # plot = Set any value to generate plot figures (PNG) for problems with 2 variables
     # max_fail_stack = Maximum value for the allowed number of iterations without failed Pareto points
     
@@ -246,6 +246,7 @@ def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
                 if gd[i]>0: # For safe Pareto points only
                     if width == 1:
                         safe_dist = np.abs(Xaux[pdominant[gd>0]]-Xaux[pdominant[i]]) # Distance between safe Pareto points
+                        fail_dist = np.abs(Xaux[pdominant[gd<=0]]-Xaux[pdominant[i]]) # Distance between failed Pareto points and the observed safe Pareto point
                         if np.sum(np.logical_and(np.all(safe_dist <= np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) < 2: # If less than 3 safe Pareto points inside width, do not remove points
                             inlimit_points = set()
                         elif np.sum(np.logical_and(np.all(safe_dist <= 2*np.ones(nv),axis=1),np.all(safe_dist > 0.5*np.ones(nv),axis=1))) < 2:
@@ -256,13 +257,18 @@ def PSMC(X,fun_G,M,S,RV_type,P,direction=[],width=0,plot=[],max_fail_stack=[]):
                             lateral_tol = np.ones(nv)
                         else:
                             lateral_tol = 1.5*np.ones(nv)
+                        while np.sum(np.all(fail_dist <= lateral_tol,axis=1)) > 0: # If at least 1 failed point is below the chosen tolerance distance, half the size of the tolerance distance
+                            lateral_tol = 0.5*lateral_tol
                     else:
                         safe_dist = np.abs(Xaux[pdominant[gd>0]]-Xaux[pdominant[i]]) # Distance between safe Pareto points
+                        fail_dist = np.abs(Xaux[pdominant[gd<=0]]-Xaux[pdominant[i]]) # Distance between failed Pareto points and the observed safe Pareto point
                         if np.sum(np.logical_and(np.all(safe_dist <= np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) < 2: # If less than 3 safe Pareto points inside width, do not remove points
                             inlimit_points = set()
                         else:
                             lateral_tol = width*np.ones(nv)
-                    if np.sum(np.logical_and(np.all(safe_dist <= 2*np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) > 1:
+                        while np.sum(np.all(fail_dist <= lateral_tol,axis=1)) > 0: # If at least 1 failed point is below the chosen tolerance distance, half the size of the tolerance distance
+                            lateral_tol = 0.5*lateral_tol
+                    if np.sum(np.logical_and(np.all(safe_dist <= np.ones(nv),axis=1),np.all(safe_dist > 0.25*np.ones(nv),axis=1))) > 1:
                         #else:
                         # Find perpendicular distance from sample points with respect to vector from mean to safe Pareto point
                         v = np.zeros(nv) - Xaux[pdominant[i]]
