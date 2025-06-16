@@ -19,7 +19,7 @@ from Distribution_class import pdf_parameters, generate_sample
 #%% Variáveis de entrada
 PF = 0;
 aval = 0;
-n = 1;
+n = 500;
 for i in range(n):
     N = int(3350)
     nRV = 2
@@ -61,7 +61,9 @@ for i in range(n):
     print("Filtering time (s): ",times)
 
     PF_SMC = N_fail/N # Probabilidade de Falha
-
+    PF += PF_SMC
+    aval += F_count   
+    
     if PF_SMC == 0:
         CoV = 0;
     else:
@@ -72,5 +74,7 @@ for i in range(n):
     print('Coeficiente de Variação = {}'.format(CoV))
     print('Número de avaliações de G = {}'.format(F_count))
 
+PF = PF/n
+aval = aval/n
 print("\nPROBABILIDADE DE FALHA FINAL:",PF/n)
 print("\nNe FINAL:",aval/n)
