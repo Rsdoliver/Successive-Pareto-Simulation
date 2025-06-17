@@ -76,5 +76,5 @@ for i in range(n):
 
 PF = PF/n
 aval = aval/n
-print("\nPROBABILIDADE DE FALHA FINAL:",PF/n)
-print("\nNe FINAL:",aval/n)
+print("\nPROBABILIDADE DE FALHA FINAL:",PF)
+print("\nNe FINAL:",aval)
