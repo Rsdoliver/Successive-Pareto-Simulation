@@ -117,7 +117,4 @@ def PSMC(X,fun_G,M,S,direction=[]):
         #print('iteration = {}, N_fail = {}, i_fail = {}, F_count = {}'.format(iteration,N_fail,i_fail,F_count))
         print('iteration = {}, N_fail = {}, i_fail = {}, F_count = {}, sample size = {}, Pareto points = {}'.format(iteration,N_fail,i_fail,F_count,X.shape[0],count))
         
-        if i_fail == 0:
-            break
-        
     return [N_fail,F_count,direction]
