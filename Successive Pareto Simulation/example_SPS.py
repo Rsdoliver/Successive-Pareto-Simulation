@@ -44,7 +44,7 @@ for i in range(nRV):
 for i in range(nRV):
     Xs[:,i] = generate_sample(RV_type[i],P[i],N)
 
-np.save('Xspipe',Xs) # Salvar amostra para comparação com MC Tradicional (opcional)
+#np.save('Xs',Xs) # Salvar amostra para comparação com MC Tradicional (opcional)
 
 #%% Cálculo
 
