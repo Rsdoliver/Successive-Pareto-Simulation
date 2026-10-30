@@ -45,7 +45,7 @@ def faildir(M,S,fun_G,nRV):
     
     return direction
 
-# Monte Carlo Seletivo
+# Successive Pareto simulation
 def PSMC(X,fun_G,M,S,direction=[]):
     
     nRV = np.size(X,axis=1)
